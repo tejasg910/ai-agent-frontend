@@ -1,8 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary: 24 100% 50%;
+  --color-primary-foreground: 0 0% 100%;
+  
+  --color-secondary: 28 100% 95%;
+  --color-secondary-foreground: 24 100% 10%;
+  
+  --color-background: 0 0% 100%;
+  --color-foreground: 222.2 47.4% 11.2%;
+  
+  --color-muted: 24 10% 96%;
+  --color-muted-foreground: 24 5% 45%;
+  
+  --color-accent: 24 100% 90%;
+  --color-accent-foreground: 24 100% 10%;
+  
+  --color-destructive: 0 100% 50%;
+  --color-destructive-foreground: 0 0% 100%;
 }
 
 @theme inline {
