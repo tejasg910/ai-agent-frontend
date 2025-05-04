@@ -4,13 +4,29 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useGetCandidate } from "@/api/hooks/candidates/useGetCandidate";
+import ViewCandidate from "@/components/candidates/candidate-view";
+import { useGetAppointmentByCandidate } from "@/api/hooks/appointments/useGetAppointbyCandidate";
+import { AppointmentListItem } from "@/components/appointments/AppointmentList";
+import SlotSelectionFormCandidate from "@/components/candidates/book-slot";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 export default function CandidateDetailPage() {
   const { id } = useParams();
   // const [candidate, setCandidate] = useState(null);
   // const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("details");
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [openShedule, setOpenSchedule] = useState(false);
+  const itemsPerPage = 10; // Number of appointments per page
   const {
     data: candidate,
     isLoading: loading,
@@ -18,7 +34,12 @@ export default function CandidateDetailPage() {
     mutate,
   } = useGetCandidate(id);
 
+  console.log(candidate, "This is candidate data");
 
+  const { data: appointmentData, isLoading: loadingAppointments } =
+    useGetAppointmentByCandidate(id, currentPage, itemsPerPage);
+  const appointment = appointmentData?.appointments;
+  console.log(appointmentData, "This s appointment");
 
   if (loading) {
     return (
@@ -54,25 +75,18 @@ export default function CandidateDetailPage() {
       minute: "2-digit",
     });
   };
-
+  const totalItems = appointment ? appointment.length : 0;
+  const totalPages = appointmentData?.totalPages;
+  const paginatedAppointments = appointment
+    ? appointment.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+      )
+    : [];
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">{candidate.name}</h1>
-        <div className="flex space-x-3">
-          <Link
-            href={`/dashboard/candidates/${id}/edit`}
-            className="bg-white text-orange-500 border border-orange-500 hover:bg-orange-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            Edit Candidate
-          </Link>
-          <Link
-            href={`/dashboard/appointments/new?candidate=${id}`}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            Schedule Appointment
-          </Link>
-        </div>
       </div>
 
       <div className="bg-white shadow rounded-lg overflow-hidden">
@@ -98,7 +112,7 @@ export default function CandidateDetailPage() {
             >
               Appointments
             </button>
-            <button
+            {/* <button
               onClick={() => setActiveTab("conversations")}
               className={`px-6 py-4 text-sm font-medium ${
                 activeTab === "conversations"
@@ -107,77 +121,78 @@ export default function CandidateDetailPage() {
               }`}
             >
               Conversations
-            </button>
+            </button> */}
           </nav>
         </div>
 
         <div className="p-6">
           {activeTab === "details" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  Personal Information
-                </h3>
-                <dl className="space-y-3">
-                  <div className="flex">
-                    <dt className="w-36 flex-shrink-0 text-gray-500">
-                      Full Name:
-                    </dt>
-                    <dd className="font-medium text-gray-900">
-                      {candidate.name}
-                    </dd>
-                  </div>
-                  <div className="flex">
-                    <dt className="w-36 flex-shrink-0 text-gray-500">
-                      Phone Number:
-                    </dt>
-                    <dd className="font-medium text-gray-900">
-                      {candidate.phone}
-                    </dd>
-                  </div>
-                  <div className="flex">
-                    <dt className="w-36 flex-shrink-0 text-gray-500">
-                      Experience:
-                    </dt>
-                    <dd className="font-medium text-gray-900">
-                      {candidate.experience} years
-                    </dd>
-                  </div>
-                </dl>
-              </div>
+            // <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            //   <div>
+            //     <h3 className="text-lg font-medium text-gray-900 mb-4">
+            //       Personal Information
+            //     </h3>
+            //     <dl className="space-y-3">
+            //       <div className="flex">
+            //         <dt className="w-36 flex-shrink-0 text-gray-500">
+            //           Full Name:
+            //         </dt>
+            //         <dd className="font-medium text-gray-900">
+            //           {candidate.name}
+            //         </dd>
+            //       </div>
+            //       <div className="flex">
+            //         <dt className="w-36 flex-shrink-0 text-gray-500">
+            //           Phone Number:
+            //         </dt>
+            //         <dd className="font-medium text-gray-900">
+            //           {candidate.phone}
+            //         </dd>
+            //       </div>
+            //       <div className="flex">
+            //         <dt className="w-36 flex-shrink-0 text-gray-500">
+            //           Experience:
+            //         </dt>
+            //         <dd className="font-medium text-gray-900">
+            //           {candidate.experience} years
+            //         </dd>
+            //       </div>
+            //     </dl>
+            //   </div>
 
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  Job Preferences
-                </h3>
-                <dl className="space-y-3">
-                  <div className="flex">
-                    <dt className="w-36 flex-shrink-0 text-gray-500">
-                      Current CTC:
-                    </dt>
-                    <dd className="font-medium text-gray-900">
-                      ₹{candidate.current_ctc}
-                    </dd>
-                  </div>
-                  <div className="flex">
-                    <dt className="w-36 flex-shrink-0 text-gray-500">
-                      Expected CTC:
-                    </dt>
-                    <dd className="font-medium text-gray-900">
-                      ₹{candidate.expected_ctc}
-                    </dd>
-                  </div>
-                  <div className="flex">
-                    <dt className="w-36 flex-shrink-0 text-gray-500">
-                      Notice Period:
-                    </dt>
-                    <dd className="font-medium text-gray-900">
-                      {candidate.notice_period}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-            </div>
+            //   <div>
+            //     <h3 className="text-lg font-medium text-gray-900 mb-4">
+            //       Job Preferences
+            //     </h3>
+            //     <dl className="space-y-3">
+            //       <div className="flex">
+            //         <dt className="w-36 flex-shrink-0 text-gray-500">
+            //           Current CTC:
+            //         </dt>
+            //         <dd className="font-medium text-gray-900">
+            //           ₹{candidate.current_ctc}
+            //         </dd>
+            //       </div>
+            //       <div className="flex">
+            //         <dt className="w-36 flex-shrink-0 text-gray-500">
+            //           Expected CTC:
+            //         </dt>
+            //         <dd className="font-medium text-gray-900">
+            //           ₹{candidate.expected_ctc}
+            //         </dd>
+            //       </div>
+            //       <div className="flex">
+            //         <dt className="w-36 flex-shrink-0 text-gray-500">
+            //           Notice Period:
+            //         </dt>
+            //         <dd className="font-medium text-gray-900">
+            //           {candidate.notice_period}
+            //         </dd>
+            //       </div>
+            //     </dl>
+            //   </div>
+            // </div>
+            <ViewCandidate candidate={candidate} />
           )}
 
           {activeTab === "appointments" && (
@@ -185,60 +200,49 @@ export default function CandidateDetailPage() {
               <h3 className="text-lg font-medium text-gray-900">
                 Appointments
               </h3>
-
-              {candidate.appointments.length === 0 ? (
+              {loadingAppointments ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+                </div>
+              ) : !appointment || appointment.length === 0 ? (
                 <p className="text-gray-500">No appointments scheduled.</p>
               ) : (
-                <div className="space-y-4">
-                  {candidate.appointments.map((appointment) => (
-                    <div
-                      key={appointment.id}
-                      className="bg-gray-50 rounded-lg p-4"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-medium text-gray-900">
-                            {appointment.job}
-                          </h4>
-                          <p className="text-sm text-gray-500">
-                            {formatDate(appointment.date_time)}
-                          </p>
-                        </div>
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            appointment.status === "completed"
-                              ? "bg-green-100 text-green-800"
-                              : appointment.status === "canceled"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-orange-100 text-orange-800"
-                          }`}
-                        >
-                          {appointment.status.charAt(0).toUpperCase() +
-                            appointment.status.slice(1)}
-                        </span>
-                      </div>
-
-                      <div className="mt-3 flex justify-end space-x-3">
-                        <Link
-                          href={`/dashboard/appointments/${appointment.id}`}
-                          className="text-orange-500 hover:text-orange-600 text-sm font-medium"
-                        >
-                          View Details
-                        </Link>
-                        {appointment.status === "booked" && (
-                          <>
-                            <button className="text-green-500 hover:text-green-600 text-sm font-medium">
-                              Complete
-                            </button>
-                            <button className="text-red-500 hover:text-red-600 text-sm font-medium">
-                              Cancel
-                            </button>
-                          </>
-                        )}
-                      </div>
+                <>
+                  <div className="space-y-4">
+                    {appointment.map((appt) => (
+                      <AppointmentListItem key={appt._id} appointment={appt} />
+                    ))}
+                  </div>
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center space-x-2 mt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.max(prev - 1, 1))
+                        }
+                        disabled={currentPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-sm text-gray-700">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCurrentPage((prev) =>
+                            Math.min(prev + 1, totalPages)
+                          )
+                        }
+                        disabled={currentPage === totalPages}
+                      >
+                        Next
+                      </Button>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -295,6 +299,8 @@ export default function CandidateDetailPage() {
           )}
         </div>
       </div>
+
+  
     </div>
   );
 }

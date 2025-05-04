@@ -1,26 +1,86 @@
+"use client";
+
 import Link from 'next/link';
+import { Calendar, LogOut, User, Settings } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useLogout } from '@/api/hooks/auth/logout';
 
 export default function Header() {
+
+  const {mutate : logout} = useLogout()
+  // Handle logout functionality
+  const handleLogout = () => {
+    // Add your logout logic here
+    try {
+      logout()
+    } catch (error) {
+      
+    }
+    console.log('Logging out...');
+    // Example: router.push('/login');
+  };
+
   return (
-    <header className="bg-white border-b border-gray-200 shadow-sm">
+    <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
+          {/* Logo */}
           <div className="flex items-center">
-            <Link href="/dashboard" className="text-2xl font-bold text-orange-500">
-              Interview Scheduler
+            <Link href="/dashboard" className="flex items-center">
+              <Calendar className="h-6 w-6 text-orange-500 mr-2" />
+              <span className="text-xl font-bold text-gray-800">Interview<span className="text-orange-500">Scheduler</span></span>
             </Link>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <button className="p-2 rounded-full hover:bg-gray-100">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-              </button>
-            </div>
-            <div className="h-8 w-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold">
-              A
-            </div>
+
+          {/* User profile dropdown */}
+          <div className="flex items-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="outline-none">
+                  <Avatar className="h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity">
+                    <AvatarFallback className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+                      A
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none"> User</p>
+                    <p className="text-xs leading-none text-gray-500">Profile section</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  {/* <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem> */}
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="text-red-600 focus:text-red-600" 
+                  onClick={handleLogout}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>

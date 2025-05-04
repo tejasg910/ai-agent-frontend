@@ -6,7 +6,7 @@ import { mutate as globalMutate } from 'swr';
 
 export const useUpdateAppointmentStatus = (id) => {
   const key = `/appointments/${id}`;
-  const fetcher = useMemo(() => async (_, { arg }) => appointmentsApi.updateStatus(id, arg), [id]);
+  const fetcher = useMemo(() => async (_, { arg }) => appointmentsApi.update(id, arg), [id]);
   const { trigger: mutate, isMutating: isLoading, data, error } =
     useSWRMutation(key, fetcher, {
       onSuccess: () => {

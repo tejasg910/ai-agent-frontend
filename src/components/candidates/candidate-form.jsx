@@ -1,217 +1,711 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-
-export default function CandidateForm({ candidate, onSubmit, isSubmitting }) {
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import {
+  User,
+  Phone,
+  DollarSign,
+  Mail,
+  Clock,
+  Briefcase,
+  Star,
+  Save,
+  X,
+  Plus,
+  Check,
+  Calendar,
+  MapPin,
+  Info,
+  AlertCircle,
+} from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useGetAllJobs } from "@/api/hooks/jobs/useGetAllJobs";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import { useGetAllJobsForCandidates } from "@/api/hooks/jobs/useGetAllJobsForCandidates";
+export default function CandidateForm({
+  candidate,
+  onSubmit,
+  isSubmitting,
+  isEdit,
+}) {
   const router = useRouter();
+  const { data: jobs = [] } = useGetAllJobsForCandidates();
+  console.log(jobs, "This is jobs");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [open, setOpen] = useState(false);
+  const [jobOpen, setJobOpen] = useState(false);
+  console.log(candidate, "This is candidate");
   const [formData, setFormData] = useState({
-    name: candidate?.name || '',
-    phone: candidate?.phone || '',
-    current_ctc: candidate?.current_ctc || '',
-    expected_ctc: candidate?.expected_ctc || '',
-    notice_period: candidate?.notice_period || '',
-    experience: candidate?.experience || '',
+    name: candidate?.name || "",
+    phone: candidate?.phone || "",
+    email: candidate?.email || "",
+    about: candidate?.about || "",
+    current_ctc: candidate?.current_ctc || "",
+    expected_ctc: candidate?.expected_ctc || "",
+    notice_period: candidate?.notice_period || "",
+    experience: candidate?.experience || "",
+    location_preference: candidate?.location_preference || "flexible",
+    status: candidate?.status || "pending",
+    jobAssignment: candidate?.jobAssignment || null,
+    available: candidate?.available ? new Date(candidate.available) : null,
+    last_contact: candidate?.last_contact
+      ? new Date(candidate.last_contact)
+      : null,
+    ratings: candidate?.ratings || [],
   });
-  
+
   const [errors, setErrors] = useState({});
-  
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(
+    candidate?.jobAssignment || null
+  );
+
+  useEffect(() => {
+    // If editing and job is assigned, find the job details
+    if (candidate?.jobAssignment && jobs.length > 0) {
+      const job = jobs.find((j) => j._id === candidate.jobAssignment);
+      if (job) {
+        setSelectedJob(job);
+      }
+    }
+  }, [candidate, jobs]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
     // Clear error when field is edited
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
-  
+
+  const handleSelectChange = (name, value) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const handleDateChange = (field, date) => {
+    setFormData((prev) => ({ ...prev, [field]: date }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const handleSelectJob = (job) => {
+    setSelectedJob(job);
+
+    // Initialize ratings array with job skills if not already rated
+    const newRatings = job.skills.map((skill) => {
+      const existingRating = formData.ratings.find(
+        (r) => r.skill._id === skill._id
+      );
+      return (
+        existingRating || {
+          skill: { name: skill.name, _id: skill._id },
+          rating: 0,
+        }
+      );
+    });
+
+    console.log(newRatings, job, "This is new ratings");
+
+    setFormData((prev) => ({
+      ...prev,
+      jobAssignment: job._id,
+      ratings: newRatings,
+    }));
+
+    if (errors.jobAssignment) {
+      setErrors((prev) => ({ ...prev, jobAssignment: "" }));
+    }
+
+    setJobOpen(false);
+  };
+
+  const handleRatingChange = (skillId, rating) => {
+    console.log(formData, "this is form data, ", skillId, rating);
+    setFormData((prev) => ({
+      ...prev,
+      ratings: prev.ratings.map((r) =>
+        r.skill?._id === skillId ? { ...r, rating } : r
+      ),
+    }));
+  };
+
   const validate = () => {
     const newErrors = {};
-    
+
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = "Name is required";
     }
-    
+
     if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
+      newErrors.phone = "Phone number is required";
     } else if (!/^\+?[0-9\s\-()]+$/.test(formData.phone)) {
-      newErrors.phone = 'Please enter a valid phone number';
+      newErrors.phone = "Please enter a valid phone number";
     }
-    
-    if (!formData.current_ctc.trim()) {
-      newErrors.current_ctc = 'Current CTC is required';
-    } else if (isNaN(formData.current_ctc)) {
-      newErrors.current_ctc = 'CTC must be a number';
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
     }
-    
-    if (!formData.expected_ctc.trim()) {
-      newErrors.expected_ctc = 'Expected CTC is required';
-    } else if (isNaN(formData.expected_ctc)) {
-      newErrors.expected_ctc = 'CTC must be a number';
+
+    // Validate ratings if job is assigned
+    if (formData.jobAssignment && formData.ratings.length > 0) {
+      const invalidRatings = formData.ratings.filter(
+        (r) => r.rating < 1 || r.rating > 5
+      );
+      if (invalidRatings.length > 0) {
+        newErrors.ratings = "All skills must be rated between 1-5";
+      }
     }
-    
-    if (!formData.notice_period.trim()) {
-      newErrors.notice_period = 'Notice period is required';
-    }
-    
-    if (!formData.experience.trim()) {
-      newErrors.experience = 'Experience is required';
-    } else if (isNaN(formData.experience)) {
-      newErrors.experience = 'Experience must be a number';
-    }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+    setFormSubmitted(true);
+
     if (validate()) {
-      onSubmit({
+      // Format and clean data before submission
+      const submissionData = {
         ...formData,
-        current_ctc: parseFloat(formData.current_ctc),
-        expected_ctc: parseFloat(formData.expected_ctc),
-        experience: parseInt(formData.experience, 10)
-      });
+        current_ctc: parseFloat(formData.current_ctc) || 0,
+        expected_ctc: parseFloat(formData.expected_ctc) || 0,
+        experience: parseInt(formData.experience, 10) || 0,
+      };
+
+      onSubmit(submissionData);
     }
   };
-  
+
+  // Filter jobs based on search term
+  const filteredJobs = jobs.filter((job) =>
+    job.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handlePhoneChange = (value, country) => {
+    console.log(country, value, "this is value");
+    const phone = country.dialCode + value;
+    setFormData((prev) => ({ ...prev, phone: value }));
+
+    if (errors.phone) {
+      setErrors((prev) => ({ ...prev, phone: "" }));
+    }
+  };
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-            Full Name
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border ${
-              errors.name ? 'border-red-300' : 'border-gray-300'
-            } rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
-          />
-          {errors.name && (
-            <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+    <Card className="w-full shadow-lg border-t-4 border-t-orange-500">
+      <CardHeader className="bg-gradient-to-r from-orange-50 to-transparent">
+        <CardTitle className="flex items-center text-xl font-semibold text-gray-800">
+          <User className="mr-2 h-5 w-5 text-orange-500" />
+          {candidate ? "Edit Candidate Profile" : "Add New Candidate"}
+        </CardTitle>
+      </CardHeader>
+
+      <CardContent className="pt-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-1">
+            <Label
+              htmlFor="name"
+              className="text-sm font-medium flex items-center text-gray-700"
+            >
+              <User className="mr-2 h-4 w-4 text-orange-500" />
+              Full Name
+            </Label>
+            <Input
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className={`transition-all ${
+                errors.name
+                  ? "border-red-300 ring-1 ring-red-300"
+                  : "border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+              }`}
+              placeholder="Enter candidate's full name"
+            />
+            {errors.name && (
+              <p className="text-sm text-red-600 flex items-center mt-1">
+                <X className="mr-1 h-4 w-4" />
+                {errors.name}
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label
+                htmlFor="phone"
+                className="text-sm font-medium flex items-center text-gray-700"
+              >
+                <Clock className="mr-2 h-4 w-4 text-orange-500" />
+                Phone Number*
+              </Label>
+              <div className={`${errors.phone ? "phone-input-error" : ""}`}>
+                <PhoneInput
+                  country={"in"} // Default to India
+                  value={formData.phone}
+                  onChange={handlePhoneChange}
+                  inputProps={{
+                    name: "phone",
+                    id: "phone",
+                    required: true,
+                    className:
+                      "w-full focus:border-orange-500 focus:ring-orange-500",
+                  }}
+                  inputStyle={{
+                    padding: "5px 15px",
+                    border: "1px solid #e6e8ec",
+                    borderRadius: "10px",
+                  }}
+                  enableSearch
+                  searchPlaceholder="Search countries..."
+                  placeholder="Enter mobile"
+                />
+              </div>
+              {errors.phone && (
+                <p className="text-sm text-red-600 flex items-center mt-1">
+                  <X className="mr-1 h-4 w-4" />
+                  {errors.phone}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <Label
+                htmlFor="email"
+                className="text-sm font-medium flex items-center text-gray-700"
+              >
+                <Mail className="mr-2 h-4 w-4 text-orange-500" />
+                Email Address
+              </Label>
+              <Input
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className={`transition-all ${
+                  errors.email
+                    ? "border-red-300 ring-1 ring-red-300"
+                    : "border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                }`}
+                placeholder="Enter email address"
+              />
+              {errors.email && (
+                <p className="text-sm text-red-600 flex items-center mt-1">
+                  <X className="mr-1 h-4 w-4" />
+                  {errors.email}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <Label
+              htmlFor="about"
+              className="text-sm font-medium flex items-center text-gray-700"
+            >
+              <Info className="mr-2 h-4 w-4 text-orange-500" />
+              About the Candidate
+            </Label>
+            <Textarea
+              id="about"
+              name="about"
+              value={formData.about}
+              onChange={handleChange}
+              className="border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+              placeholder="Brief description, background, or notes about the candidate"
+              rows={3}
+            />
+          </div>
+
+          <Separator className="my-4" />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label
+                htmlFor="current_ctc"
+                className="text-sm font-medium flex items-center text-gray-700"
+              >
+                <DollarSign className="mr-2 h-4 w-4 text-orange-500" />
+                Current CTC (USD)
+              </Label>
+              <Input
+                id="current_ctc"
+                name="current_ctc"
+                value={formData.current_ctc}
+                onChange={handleChange}
+                className="border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                placeholder="Enter current salary"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label
+                htmlFor="expected_ctc"
+                className="text-sm font-medium flex items-center text-gray-700"
+              >
+                <DollarSign className="mr-2 h-4 w-4 text-orange-500" />
+                Expected CTC (USD)
+              </Label>
+              <Input
+                id="expected_ctc"
+                name="expected_ctc"
+                value={formData.expected_ctc}
+                onChange={handleChange}
+                className="border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                placeholder="Enter expected salary"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label
+                htmlFor="notice_period"
+                className="text-sm font-medium flex items-center text-gray-700"
+              >
+                <Clock className="mr-2 h-4 w-4 text-orange-500" />
+                Notice Period
+              </Label>
+              <Input
+                id="notice_period"
+                name="notice_period"
+                value={formData.notice_period}
+                onChange={handleChange}
+                className="border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                placeholder="e.g., 30 days, 2 months"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label
+                htmlFor="experience"
+                className="text-sm font-medium flex items-center text-gray-700"
+              >
+                <Briefcase className="mr-2 h-4 w-4 text-orange-500" />
+                Experience (Years)
+              </Label>
+              <Input
+                id="experience"
+                name="experience"
+                value={formData.experience}
+                onChange={handleChange}
+                className="border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                placeholder="Enter years of experience"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label
+                htmlFor="location_preference"
+                className="text-sm font-medium flex items-center text-gray-700"
+              >
+                <MapPin className="mr-2 h-4 w-4 text-orange-500" />
+                Location Preference
+              </Label>
+              <Select
+                value={formData.location_preference}
+                onValueChange={(value) =>
+                  handleSelectChange("location_preference", value)
+                }
+              >
+                <SelectTrigger className="border-gray-300 focus:border-orange-500 focus:ring-orange-500">
+                  <SelectValue placeholder="Select location preference" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="onsite">Onsite</SelectItem>
+                  <SelectItem value="remote">Remote</SelectItem>
+                  <SelectItem value="hybrid">Hybrid</SelectItem>
+                  <SelectItem value="flexible">Flexible</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label
+                htmlFor="status"
+                className="text-sm font-medium flex items-center text-gray-700"
+              >
+                <AlertCircle className="mr-2 h-4 w-4 text-orange-500" />
+                Application Status
+              </Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => handleSelectChange("status", value)}
+              >
+                <SelectTrigger className="border-gray-300 focus:border-orange-500 focus:ring-orange-500">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="screening">Screening</SelectItem>
+                  <SelectItem value="shortlisted">Shortlisted</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="hired">Hired</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <Separator className="my-4" />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <Label className="text-sm font-medium flex items-center text-gray-700">
+                <Calendar className="mr-2 h-4 w-4 text-orange-500" />
+                Availability Date
+              </Label>
+              <DatePicker
+                date={formData.available}
+                onSelect={(date) => handleDateChange("available", date)}
+                className="border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-sm font-medium flex items-center text-gray-700">
+                <Clock className="mr-2 h-4 w-4 text-orange-500" />
+                Last Contact Date
+              </Label>
+              <DatePicker
+                date={formData.last_contact}
+                onSelect={(date) => handleDateChange("last_contact", date)}
+                className="border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+              />
+            </div>
+          </div>
+
+          <Separator className="my-4" />
+
+          <div className="space-y-3">
+            <Label className="text-sm font-medium flex items-center text-gray-700">
+              <Briefcase className="mr-2 h-4 w-4 text-orange-500" />
+              Job Assignment
+            </Label>
+
+            <Popover open={jobOpen} onOpenChange={setJobOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start border-gray-300 text-left font-normal"
+                >
+                  {selectedJob ? (
+                    <span>{selectedJob.title}</span>
+                  ) : (
+                    <span className="text-gray-400">Select a job position</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput
+                    placeholder="Search jobs..."
+                    className="h-9"
+                    value={searchTerm}
+                    onValueChange={setSearchTerm}
+                  />
+                  <CommandList>
+                    <CommandEmpty>No jobs found</CommandEmpty>
+                    <CommandGroup>
+                      {filteredJobs.map((job) => (
+                        <CommandItem
+                          key={job._id}
+                          onSelect={() => handleSelectJob(job)}
+                          className="flex items-center justify-between"
+                        >
+                          {job.title}
+                          {formData.jobAssignment === job._id && (
+                            <Check className="h-4 w-4 text-green-500" />
+                          )}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Skill Ratings - Only visible when job is selected */}
+          {selectedJob && formData.jobAssignment && (
+            <>
+              <Separator className="my-4" />
+
+              <div className="space-y-3">
+                <Label className="text-sm font-medium flex items-center text-gray-700  ">
+                  <Star className="mr-2 h-4 w-4 text-orange-500 " />
+                  Skill Ratings
+                </Label>
+
+                <div className="space-y-4">
+                  {selectedJob.skills.map((skill, index) => {
+                    const skillId = skill._id;
+                    console.log(
+                      formData,
+                      formData?.ratings,
+                      skill,
+                      "This si ratings"
+                    );
+                    const ratingObj = formData.ratings.find(
+                      (r) => r.skill?._id === skillId
+                    );
+                    const currentRating = ratingObj ? ratingObj.rating : 0;
+
+                    console.log(
+                      ratingObj,
+                      currentRating,
+                      skillId,
+                      skill,
+                      "thiss current rating"
+                    );
+
+                    return (
+                      <div key={skillId} className="space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-700">
+                            {skill.name || skill}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {currentRating}/5
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => handleRatingChange(skillId, star)}
+                              className={`rounded-full p-1 focus:outline-none ${
+                                currentRating >= star
+                                  ? "text-yellow-400 hover:text-yellow-500"
+                                  : "text-gray-300 hover:text-yellow-300"
+                              }`}
+                            >
+                              <Star className="h-5 w-5 fill-current" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {errors.ratings && (
+                  <p className="text-sm text-red-600 flex items-center mt-1">
+                    <X className="mr-1 h-4 w-4" />
+                    {errors.ratings}
+                  </p>
+                )}
+              </div>
+            </>
           )}
-        </div>
-        
-        <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-            Phone Number
-          </label>
-          <input
-            type="text"
-            id="phone"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border ${
-              errors.phone ? 'border-red-300' : 'border-gray-300'
-            } rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
-          />
-          {errors.phone && (
-            <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+
+          {formSubmitted && Object.keys(errors).length === 0 && (
+            <Alert className="bg-green-50 border-green-200">
+              <AlertTitle className="text-green-800 flex items-center">
+                <Check className="mr-2 h-4 w-4" />
+                Form is ready to submit
+              </AlertTitle>
+              <AlertDescription className="text-green-700">
+                All fields have been successfully validated.
+              </AlertDescription>
+            </Alert>
           )}
-        </div>
-        
-        <div>
-          <label htmlFor="current_ctc" className="block text-sm font-medium text-gray-700">
-            Current CTC (USD)
-          </label>
-          <input
-            type="text"
-            id="current_ctc"
-            name="current_ctc"
-            value={formData.current_ctc}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border ${
-              errors.current_ctc ? 'border-red-300' : 'border-gray-300'
-            } rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
-          />
-          {errors.current_ctc && (
-            <p className="mt-1 text-sm text-red-600">{errors.current_ctc}</p>
-          )}
-        </div>
-        
-        <div>
-          <label htmlFor="expected_ctc" className="block text-sm font-medium text-gray-700">
-            Expected CTC (USD)
-          </label>
-          <input
-            type="text"
-            id="expected_ctc"
-            name="expected_ctc"
-            value={formData.expected_ctc}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border ${
-              errors.expected_ctc ? 'border-red-300' : 'border-gray-300'
-            } rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
-          />
-          {errors.expected_ctc && (
-            <p className="mt-1 text-sm text-red-600">{errors.expected_ctc}</p>
-          )}
-        </div>
-        
-        <div>
-          <label htmlFor="notice_period" className="block text-sm font-medium text-gray-700">
-            Notice Period
-          </label>
-          <input
-            type="text"
-            id="notice_period"
-            name="notice_period"
-            value={formData.notice_period}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border ${
-              errors.notice_period ? 'border-red-300' : 'border-gray-300'
-            } rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
-          />
-          {errors.notice_period && (
-            <p className="mt-1 text-sm text-red-600">{errors.notice_period}</p>
-          )}
-        </div>
-        
-        <div>
-          <label htmlFor="experience" className="block text-sm font-medium text-gray-700">
-            Experience (Years)
-          </label>
-          <input
-            type="text"
-            id="experience"
-            name="experience"
-            value={formData.experience}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border ${
-              errors.experience ? 'border-red-300' : 'border-gray-300'
-            } rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
-          />
-          {errors.experience && (
-            <p className="mt-1 text-sm text-red-600">{errors.experience}</p>
-          )}
-        </div>
-      </div>
-      
-      <div className="flex justify-end space-x-3">
-        <button
+        </form>
+      </CardContent>
+
+      <CardFooter className="bg-gray-50 flex justify-end space-x-3 py-4 px-6 border-t border-gray-100">
+        <Button
           type="button"
           onClick={() => router.back()}
-          className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+          variant="outline"
+          className="border-gray-300 text-gray-700 hover:bg-gray-50"
         >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           type="submit"
+          onClick={handleSubmit}
           disabled={isSubmitting}
-          className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-orange-500 hover:bg-orange-600 text-white"
         >
-          {isSubmitting ? 'Saving...' : candidate ? 'Update Candidate' : 'Add Candidate'}
-        </button>
-      </div>
-    </form>
+          {isSubmitting ? (
+            <>
+              <svg
+                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              {candidate ? "Update Candidate" : "Save Candidate"}
+            </>
+          )}
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }
