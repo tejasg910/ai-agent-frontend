@@ -29,6 +29,7 @@ import {
   CopyPlusIcon,
   Copy,
   ClipboardCheck,
+  Lock,
 } from "lucide-react";
 import {
   Pagination,
@@ -52,7 +53,6 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { useGetAllJobsForCandidates } from "@/api/hooks/jobs/useGetAllJobsForCandidates";
 import { useCopyForm } from "@/api/hooks/form/useCopyForm";
 export default function CandidatesPage() {
   const [activeTab, setActiveTab] = useState("all");
@@ -64,7 +64,6 @@ export default function CandidatesPage() {
   const [copyLink, setCopyLink] = useState(false);
   const limit = 10;
   const [jobFilter, setJobFilter] = useState(null);
-  const { data: jobs = [] } = useGetAllJobsForCandidates();
 
   // Parse filters based on active tab
   const filters = {
@@ -113,15 +112,9 @@ export default function CandidatesPage() {
     );
   }
 
-  const handleSelectJob = (job) => {
-    setSelectedJob(job);
-    setJobOpen(false);
-  };
-  console.log(jobs, "This si jobs");
+ 
   // Filter jobs based on search term
-  const filteredJobs = jobs.filter((job) =>
-    job.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+
 
   const handelCopy = async () => {
     const data = await copy();
@@ -150,15 +143,17 @@ export default function CandidatesPage() {
             {copyLink ? <ClipboardCheck /> : <Copy className="mr-2 h-4 w-4" />}
             {copyLink ? "Copied!" : "Copy Link"}
           </Button>
-          <Button
-            onClick={startCall}
-            variant="outline"
-            size="sm"
-            className="border-orange-300 text-orange-700 hover:bg-orange-50"
-          >
-            <Phone className="mr-2 h-4 w-4" />
-            Start Calling
-          </Button>
+          <Button 
+    disabled={true}
+    variant="outline"
+    size="sm"
+    className="border-orange-300 text-gray-400 hover:bg-orange-50 cursor-not-allowed opacity-70 flex items-center"
+  >
+    <Phone className="mr-2 h-4 w-4" />
+    <Lock className="mr-2 h-3 w-3" />
+    Start Calling
+  </Button>
+
           <Button
             asChild
             className="bg-orange-500 hover:bg-orange-600 text-white shadow-sm"
