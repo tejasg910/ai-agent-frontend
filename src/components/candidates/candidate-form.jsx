@@ -58,14 +58,16 @@ import { useGetAllJobs } from "@/api/hooks/jobs/useGetAllJobs";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { useGetAllJobsForCandidates } from "@/api/hooks/jobs/useGetAllJobsForCandidates";
+import { useGetAllJobsForRecruiter } from "@/api/hooks/jobs/useGetAllJobsRecruiter";
 export default function CandidateForm({
   candidate,
   onSubmit,
   isSubmitting,
   isEdit,
+  id
 }) {
   const router = useRouter();
-  const { data: jobs = [] } = useGetAllJobsForCandidates();
+  const { data: jobs = [] } = useGetAllJobsForRecruiter();
   console.log(jobs, "This is jobs");
   const [searchTerm, setSearchTerm] = useState("");
   const [open, setOpen] = useState(false);

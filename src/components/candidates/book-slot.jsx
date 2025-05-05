@@ -24,8 +24,8 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetSlots } from "@/api/hooks/form/useGetSlots";
-import { useShedule } from "@/api/hooks/form/useShedule";
 import { useToast } from "@/hooks/useToast";
+import { useShedule } from "@/api/hooks/appointments/useSheduleAppointment.";
 
 export default function SlotSelectionFormCandidate({
   candidateId,
@@ -40,7 +40,7 @@ export default function SlotSelectionFormCandidate({
   const { showError } = useToast();
   const { data: slots, isLoading, error } = useGetSlots(candidateId);
 
-  console.log(slots, "this si slots");
+  console.log(slots, error, "this si slots");
   const {
     mutate: scheduleInterview,
     isLoading: isScheduling,
@@ -119,11 +119,10 @@ export default function SlotSelectionFormCandidate({
       <Alert variant="destructive">
         <AlertTitle>Error loading slots</AlertTitle>
         <AlertDescription>
-          {error?.error || "Could not load available slots. Please try again."}
+          {error?.response?.data?.error ||
+            "Could not load available slots. Please try again."}
         </AlertDescription>
-        <div className="mt-4">
-          <Button onClick={onCancel}>Go Back</Button>
-        </div>
+     
       </Alert>
     );
   }

@@ -219,9 +219,9 @@ export default function ViewCandidate({ candidate }) {
                     <p className="text-gray-500">
                       Not currently assigned to any job
                     </p>
-                    <Button variant="outline" size="sm" className="mt-2">
+                    {/* <Button variant="outline" size="sm" className="mt-2">
                       Assign to Job
-                    </Button>
+                    </Button> */}
                   </div>
                 )}
               </div>
@@ -286,10 +286,10 @@ export default function ViewCandidate({ candidate }) {
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[700px]">
                   <DialogHeader>
-                    <DialogTitle>Edit profile</DialogTitle>
+                    <DialogTitle>Shedule Interview</DialogTitle>
+                   
                     <DialogDescription>
-                      Make changes to your profile here. Click save when you're
-                      done.
+                    Shedule an interview with {candidate.name}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
@@ -304,9 +304,7 @@ export default function ViewCandidate({ candidate }) {
                       }}
                     />
                   </div>
-                  <DialogFooter>
-                    <Button type="submit">Save changes</Button>
-                  </DialogFooter>
+           
                 </DialogContent>
               </Dialog>
             )}

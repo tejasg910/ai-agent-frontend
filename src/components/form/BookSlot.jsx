@@ -83,6 +83,7 @@ export default function SlotSelectionForm({
         slotId: selectedSlot,
         interviewType,
         job_id,
+        recruiterId: job_id,
       },
       {
         onSuccess: (data) => {

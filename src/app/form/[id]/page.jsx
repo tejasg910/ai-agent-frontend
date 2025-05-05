@@ -185,6 +185,8 @@ const RecruitmentPortalPage = () => {
                   <CandidateForm
                     onSubmit={handleCandidateSubmit}
                     isSubmitting={isLoading}
+                    id={id}
+
                   />
                 </CardContent>
               </Card>
@@ -215,6 +217,7 @@ const RecruitmentPortalPage = () => {
                     onSuccess={handleSlotBookingSuccess}
                     onCancel={handleSlotBookingCancel}
                     candidateId={data?.candidate?._id}
+                    
                     job_id={id}
                   />
                 </CardContent>

@@ -160,7 +160,7 @@ function EnhancedGlowEffect() {
           {/* Dashboard image */}
           <div className="relative">
             <img 
-              src="/dashboard.png" 
+              src="/assets/dashboardpage.png" 
               alt="Dashboard Interface" 
               className="w-full rounded-xl border border-yellow-900 shadow-xl"
             />

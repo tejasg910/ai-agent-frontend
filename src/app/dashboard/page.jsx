@@ -4,10 +4,22 @@ import OverviewChart from "@/components/dashboard/overview-chart";
 
 import { useDashboard } from "@/api/hooks/dashboard/useDashboard";
 export default function DashboardPage() {
-  const { data: dashBoardDataRes, isError } = useDashboard();
+  const { data: dashBoardDataRes, isError, error, isLoading } = useDashboard();
 
-  console.log(isError, "this is error in dasbhoard", dashBoardDataRes);
-  if (isError || !dashBoardDataRes) {
+  console.log(error, "this is error in dasbhoard", dashBoardDataRes);
+
+  if (isLoading) {
+    return ( 
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="bg-white p-6 rounded-lg shadow-md text-center">
+          <h2 className="text-lg font-semibold text-gray-800">Loading...</h2>
+          <p className="text-gray-600">Please wait while we fetch the data.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">
         <div className="bg-white p-6 rounded-lg shadow-md text-center">
@@ -20,9 +32,9 @@ export default function DashboardPage() {
     );
   }
 
-  const data = dashBoardDataRes.data;
+  const data = dashBoardDataRes?.data;
   console.log(dashBoardDataRes);
-  if (!data?.success) {
+  if (!dashBoardDataRes?.success) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">
         <div className="bg-white p-6 rounded-lg shadow-md text-center">
@@ -34,7 +46,7 @@ export default function DashboardPage() {
       </div>
     );
   }
-  const dashBoardData = data?.data;
+  const dashBoardData = dashBoardDataRes?.data;
 
   return (
     <div className="space-y-6">

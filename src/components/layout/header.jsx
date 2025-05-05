@@ -13,15 +13,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useLogout } from '@/api/hooks/auth/logout';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
-
+const router = useRouter()
   const {mutate : logout} = useLogout()
   // Handle logout functionality
   const handleLogout = () => {
     // Add your logout logic here
     try {
       logout()
+      router.refresh()
     } catch (error) {
       
     }

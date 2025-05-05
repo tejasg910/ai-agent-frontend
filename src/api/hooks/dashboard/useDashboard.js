@@ -1,15 +1,11 @@
-// /api/hooks/candidates/useCreateCandidate.js
-import useSWRMutation from 'swr/mutation';
-import { useMemo } from 'react';
-import { mutate as globalMutate } from 'swr';
-import { dashboardApi } from '@/api/services/dashboardApi';
 
-export const useDashboard = () => {
-  const key = '/dashboard';
-  const fetcher = useMemo(() => async (_, { arg }) => dashboardApi.getAll(arg), []);
-  const { trigger: mutate, isMutating: isLoading, data, error } =
-    useSWRMutation(key, fetcher, {
-      onSuccess: () => globalMutate(key)
-    });
-  return { mutate, isLoading, isError: !!error, data };
+import { dashboardApi } from '@/api/services/dashboardApi';
+import useSWR from 'swr';
+
+export const useDashboard = (params = {}) => {
+  const { data, error, isValidating: isLoading, mutate } = useSWR(
+    ['/dashboard'], // dynamic key based on params
+    () => dashboardApi.getAll() // fetcher gets params from key
+  );
+  return { mutate, isLoading, isError: !!error, data, error };
 };

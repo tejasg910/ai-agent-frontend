@@ -2,8 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 
-// public and protected route lists
-const publicRoutes = ['/', '/login', '/signup']
+// static public routes
+const publicRoutes = ['/', '/login', '/signup', '/assets/*', '/form/*']
 const dashboardRoute = '/dashboard/candidates'
 
 // build your refresh‐secret
@@ -18,25 +18,26 @@ export async function middleware(req) {
   let isAuthenticated = false
   if (refreshToken) {
     try {
-      // verify signature & expiration in-process
       const { payload } = await jwtVerify(refreshToken, refreshSecret)
-      // we put userId in `sub` when signing
       if (payload.sub) {
         isAuthenticated = true
       }
     } catch (err) {
-      // token missing/expired/invalid → not authenticated
       isAuthenticated = false
     }
   }
 
+  // make /form/* public
+  const isFormRoute = pathname.startsWith('/form/')
+  const isAssetRoute = pathname.startsWith('/assets/')
+
   // 1. Authenticated users should not see public pages
-  if (isAuthenticated && publicRoutes.includes(pathname)) {
+  if (isAuthenticated && (publicRoutes.includes(pathname) || isFormRoute || isAssetRoute)) {
     return NextResponse.redirect(new URL(dashboardRoute, req.url))
   }
 
   // 2. Public pages always allowed
-  if (publicRoutes.includes(pathname)) {
+  if (publicRoutes.includes(pathname) || isFormRoute || isAssetRoute) {
     return NextResponse.next()
   }
 

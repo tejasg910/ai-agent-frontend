@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/useToast";
 import { ShowerHead } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAtom } from 'jotai';
+import { accessTokenAtom } from "@/store/authAtom";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");

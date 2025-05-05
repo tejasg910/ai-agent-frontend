@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useSignup } from "@/api/hooks/auth/singup";
 import { useToast } from "@/hooks/useToast";
 import { useRouter } from "next/navigation";
+import { useAtom } from "jotai";
+import { accessTokenAtom } from "@/store/authAtom";
 
 export default function SignupForm() {
   const [name, setName] = useState("");
@@ -13,12 +15,18 @@ export default function SignupForm() {
   const { isLoading, mutate } = useSignup();
   const router = useRouter();
   const { showError, showSuccess } = useToast();
+  const [, setAccessToken] = useAtom(accessTokenAtom);
+
   const handleSignup = async () => {
     try {
-      await mutate({ name, email, password });
+      const response = await mutate({ name, email, password });
+console.log(response, "this is response ");
+      const token = response.accessToken;
+      setAccessToken(token);
       showSuccess("Registration successfull");
       router.push("/dashboard");
     } catch (error) {
+      console.log(error, "this is error ");
       showError(error?.response?.data?.message || "Invalid creds");
     }
   };

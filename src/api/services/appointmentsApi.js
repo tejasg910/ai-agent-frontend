@@ -67,5 +67,8 @@ export const appointmentsApi = {
       console.error(`Error adding notes to appointment ${id}:`, error);
       throw error;
     }
-  }
+  },
+
+
+  shedule:    (data)    => axiosInstance.post('/appointments/schedule', data).then(r => r.data),
 };

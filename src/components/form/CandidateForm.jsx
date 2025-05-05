@@ -62,12 +62,13 @@ import { useGetAllJobsForCandidates } from "@/api/hooks/jobs/useGetAllJobsForCan
 
 export default function CandidateForm({
   candidate,
+  id, 
   onSubmit,
   isSubmitting,
   isEdit,
 }) {
   const router = useRouter();
-  const { data: jobs = [] } = useGetAllJobsForCandidates();
+  const { data: jobs = [] } = useGetAllJobsForCandidates({}, id);
   const [searchTerm, setSearchTerm] = useState("");
   const [open, setOpen] = useState(false);
   const [jobOpen, setJobOpen] = useState(false);
