@@ -1,89 +1,66 @@
 // middleware.ts
-import { NextRequest, NextResponse } from 'next/server'
-import { jwtVerify } from 'jose'
+import { NextRequest, NextResponse } from 'next/server';
+import { jwtVerify } from 'jose';
 
-// static public routes
-const publicRoutes = ['/', '/login', '/signup', '/assets/*', '/form/*']
-const dashboardRoute = '/dashboard/candidates'
+// Define public and private routes
+const publicRoutes = ['/', '/login', '/signup', '/assets/*', '/form/*'];
+const dashboardRoute = '/dashboard/candidates';
 
-// build your refresh-secret
+// JWT secret
 const refreshSecret = new TextEncoder().encode(
   process.env.JWT_REFRESH_SECRET || 'fallback_refresh_secret'
-)
+);
 
 export async function middleware(req) {
-  const { pathname } = req.nextUrl
+  const { pathname } = req.nextUrl;
   
-  // Check for token in cookie first
-  const refreshToken = req.cookies.get('refreshToken')?.value
+  // Check if route is public
+  const isFormRoute = pathname.startsWith('/form/');
+  const isAssetRoute = pathname.startsWith('/assets/');
+  const isPublicRoute = publicRoutes.includes(pathname) || isFormRoute || isAssetRoute;
   
-  // Alternative: check localStorage via client-side script if cookies fail
+  // Get tokens from multiple possible sources
+  const refreshToken = req.cookies.get('refreshToken')?.value;
   
-  let isAuthenticated = false
+  // For client-side verification - a client script would handle this in practice
+  // but we need server-side logic for middleware
+  const tokenFromHeader = req.headers.get('x-refresh-token');
+  const token = refreshToken || tokenFromHeader;
   
-  if (refreshToken) {
+  let isAuthenticated = false;
+  
+  if (token) {
     try {
       // Verify token
-      const { payload } = await jwtVerify(refreshToken, refreshSecret)
-      console.log('Token verified with payload:', JSON.stringify(payload))
-      
+      const { payload } = await jwtVerify(token, refreshSecret);
       if (payload.sub) {
-        isAuthenticated = true
+        isAuthenticated = true;
       }
     } catch (err) {
-      console.error('Token verification failed:', err.message)
-      isAuthenticated = false
-      
-      // If token invalid, try to refresh via API call
-      try {
-        // Note: This approach has limitations in middleware
-        // Consider using a client-side solution instead
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh-token`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ refreshToken }),
-          credentials: 'include',
-        })
-        
-        if (response.ok) {
-          isAuthenticated = true
-        }
-      } catch (refreshErr) {
-        console.error('Token refresh failed:', refreshErr.message)
-      }
+      // Token verification failed - proceed as unauthenticated
+      isAuthenticated = false;
     }
-  } else {
-    console.log('No refresh token found in cookies')
   }
 
-  // make /form/* public
-  const isFormRoute = pathname.startsWith('/form/')
-  const isAssetRoute = pathname.startsWith('/assets/')
-
-  // 1. Authenticated users should not see public pages
-  if (isAuthenticated && (publicRoutes.includes(pathname) || isFormRoute || isAssetRoute)) {
-    return NextResponse.redirect(new URL(dashboardRoute, req.url))
+  // Simple routing logic
+  if (isAuthenticated && isPublicRoute) {
+    // Redirect authenticated users from public pages to dashboard
+    return NextResponse.redirect(new URL(dashboardRoute, req.url));
+  } else if (isPublicRoute) {
+    // Allow access to public routes
+    return NextResponse.next();
+  } else if (!isAuthenticated) {
+    // Redirect unauthenticated users to login
+    return NextResponse.redirect(new URL('/login', req.url));
   }
-
-  // 2. Public pages always allowed
-  if (publicRoutes.includes(pathname) || isFormRoute || isAssetRoute) {
-    return NextResponse.next()
-  }
-
-  // 3. Protected pages: unauthenticated → login
-  if (!isAuthenticated) {
-    return NextResponse.redirect(new URL('/login', req.url))
-  }
-
-  // 4. Authenticated + protected → allow
-  return NextResponse.next()
+  
+  // Allow authenticated users to access protected routes
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    // skip static files, images, favicon
+    // Skip static files, images, favicon
     '/((?!_next/static|_next/image|favicon.ico).*)'
   ],
-}
+};
