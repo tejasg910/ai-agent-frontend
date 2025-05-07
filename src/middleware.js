@@ -6,26 +6,56 @@ import { jwtVerify } from 'jose'
 const publicRoutes = ['/', '/login', '/signup', '/assets/*', '/form/*']
 const dashboardRoute = '/dashboard/candidates'
 
-// build your refresh‐secret
+// build your refresh-secret
 const refreshSecret = new TextEncoder().encode(
   process.env.JWT_REFRESH_SECRET || 'fallback_refresh_secret'
 )
 
 export async function middleware(req) {
   const { pathname } = req.nextUrl
+  
+  // Check for token in cookie first
   const refreshToken = req.cookies.get('refreshToken')?.value
-  console.log(refreshToken, "This si refresh token")
+  
+  // Alternative: check localStorage via client-side script if cookies fail
+  
   let isAuthenticated = false
+  
   if (refreshToken) {
     try {
+      // Verify token
       const { payload } = await jwtVerify(refreshToken, refreshSecret)
-      console.log(payload, "This is payload")
+      console.log('Token verified with payload:', JSON.stringify(payload))
+      
       if (payload.sub) {
         isAuthenticated = true
       }
     } catch (err) {
+      console.error('Token verification failed:', err.message)
       isAuthenticated = false
+      
+      // If token invalid, try to refresh via API call
+      try {
+        // Note: This approach has limitations in middleware
+        // Consider using a client-side solution instead
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh-token`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ refreshToken }),
+          credentials: 'include',
+        })
+        
+        if (response.ok) {
+          isAuthenticated = true
+        }
+      } catch (refreshErr) {
+        console.error('Token refresh failed:', refreshErr.message)
+      }
     }
+  } else {
+    console.log('No refresh token found in cookies')
   }
 
   // make /form/* public
