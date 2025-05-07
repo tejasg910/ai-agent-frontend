@@ -14,11 +14,12 @@ const refreshSecret = new TextEncoder().encode(
 export async function middleware(req) {
   const { pathname } = req.nextUrl
   const refreshToken = req.cookies.get('refreshToken')?.value
-
+  console.log(refreshToken, "This si refresh token")
   let isAuthenticated = false
   if (refreshToken) {
     try {
       const { payload } = await jwtVerify(refreshToken, refreshSecret)
+      console.log(payload, "This is payload")
       if (payload.sub) {
         isAuthenticated = true
       }
