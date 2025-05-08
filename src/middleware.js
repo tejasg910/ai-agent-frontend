@@ -12,7 +12,7 @@ const refreshSecret = new TextEncoder().encode(
 )
 
 export async function middleware(req) {
-  //   const { pathname } = req.nextUrl
+    const { pathname } = req.nextUrl
 
   const cookies = req.cookies.getAll();
   console.log(cookies, "This is cookies")
