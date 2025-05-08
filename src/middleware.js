@@ -1,6 +1,7 @@
 // middleware.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
+import { cookies } from 'next/headers'
 
 // static public routes
 const publicRoutes = ['/', '/login', '/signup', '/assets/*', '/form/*']
@@ -13,6 +14,8 @@ const refreshSecret = new TextEncoder().encode(
 
 export async function middleware(req) {
   const { pathname } = req.nextUrl
+
+  console.log((await cookies()).getAll(), "this is cookies")
   console.log(req.headers, "this is headers")
   const authHeader = req.headers.get('authorization');
   let isAuthenticated = false;
