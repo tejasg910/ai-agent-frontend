@@ -14,22 +14,20 @@ const refreshSecret = new TextEncoder().encode(
 export async function middleware(req) {
     const { pathname } = req.nextUrl
 
-  const cookies = req.cookies.getAll();
-  console.log(cookies, "This is cookies")
-    const refreshToken = req.cookies.get('refreshToken')?.value
-  console.log(refreshToken, "This si refresh token")
-    let isAuthenticated = false
-    if (refreshToken) {
+    const authHeader = req.headers.get('authorization');
+    let isAuthenticated = false;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
       try {
-        const { payload } = await jwtVerify(refreshToken, refreshSecret)
+        const { payload } = await jwtVerify(token, accessSecret);
         if (payload.sub) {
-          isAuthenticated = true
+          isAuthenticated = true;
         }
       } catch (err) {
-        isAuthenticated = false
+        isAuthenticated = false;
       }
     }
-
     // make /form/* public
     const isFormRoute = pathname.startsWith('/form/')
     const isAssetRoute = pathname.startsWith('/assets/')
