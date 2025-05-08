@@ -14,6 +14,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Button } from "@/components/ui/button";
 
 export default function JobsPage() {
   const [currentPage, setCurrentPage] = useState(1);
