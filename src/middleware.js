@@ -16,7 +16,7 @@ export async function middleware(req) {
   const { pathname } = req.nextUrl
 
   console.log((await cookies()).getAll(), "this is cookies")
-  console.log(req.headers, "this is headers")
+  console.log(req.headers.get("cookie"), "this is cookies")
   const authHeader = req.headers.get('authorization');
   let isAuthenticated = false;
 
